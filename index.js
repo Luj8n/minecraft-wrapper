@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const fs = require("fs");
 const https = require("https");
+const exec = require("child_process").exec;
 
 // server stuff
 
@@ -31,14 +32,21 @@ const handleServer = (data) => {
   switch (data.server) {
     case "start":
       console.log("starting minecraft server");
+      exec("java -jar ./local/server.jar", (error, stdout, stderr) => {
+        console.log(`Error: ${error}`);
+        console.log(`Stdout: ${stdout}`);
+        console.log(`Stderror: ${stderr}`);
+      });
       break;
     case "stop":
       console.log("stopping minecraft server");
       break;
     case "initialize":
       console.log("initializing minecraft server");
-      downloadFile("https://papermc.io/api/v1/paper/1.16.4/312/download", "./local/server.jar", () =>
-        console.log("finished downloading")
+      downloadFile(
+        "https://papermc.io/api/v1/paper/1.16.4/312/download",
+        "./local",
+        () => console.log("finished downloading")
       );
       break;
     default:
@@ -47,7 +55,11 @@ const handleServer = (data) => {
   }
 };
 
-const downloadFile = (url, path, callback) => {
+const downloadFile = (url, dir, callback) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir);
+  }
+  const path = `${dir}/server.jar`;
   const file = fs.createWriteStream(path);
   https
     .get(url, (res) => {
